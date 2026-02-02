@@ -1,0 +1,23 @@
+name: Supabase Heartbeat
+
+on:
+  schedule:
+    # Every 3 days at 12:00 UTC (safe buffer vs 7-day idle)
+    - cron: "0 12 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase heartbeat
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -e
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/heartbeat?select=id&limit=1")
+          echo "HTTP ${code}"
+          test "${code}" = "200"
